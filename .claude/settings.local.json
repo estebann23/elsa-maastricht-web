@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(git --version)",
+      "Read(//usr/bin/**)",
+      "Bash(command -v curl wget unzip tar)",
+      "Bash(curl -s \"https://api.github.com/repos/vercel/vercel/contents/examples/nextjs?ref=main\")"
+    ]
+  }
+}
