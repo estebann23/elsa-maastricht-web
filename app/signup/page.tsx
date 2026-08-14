@@ -62,11 +62,11 @@ export default function SignUp() {
       <PageShell>
         <div className="flex flex-col items-center gap-6 text-center">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black">
-            Thank you for signing up.
+            Thank you.
           </h1>
           <p className="mx-auto max-w-md text-lg leading-8 text-zinc-600">
-            Your membership form has been received. ELSA Maastricht will be in
-            touch with you shortly.
+            Your sign-up has been processed. Your membership will be fully
+            activated once you finalise the payment.
           </p>
         </div>
       </PageShell>
@@ -91,11 +91,11 @@ export default function SignUp() {
         <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black">
           Membership Sign Up/Renewal Form
         </h1>
-        <p className="mx-auto mt-2 max-w-md px-6 text-lg leading-8 text-zinc-600">
+        <p className="mx-auto mt-2 w-full text-lg leading-8 text-zinc-600">
           To Become a New Member or Renew Your Membership, please fill in and
           submit this form.
         </p>
-        <p className="mx-auto max-w-md px-6 text-base leading-7 text-zinc-600">
+        <p className="mx-auto w-full text-base leading-7 text-zinc-600">
           With over 40 years of accrued experience in building young legal
           careers, ELSA is the world&rsquo;s largest independent law
           students&rsquo; association. The unique global network of ELSA Alumni
@@ -306,19 +306,61 @@ export default function SignUp() {
           )}
         </div>
 
+        <div className="flex flex-col gap-3 rounded-lg border border-solid border-black/[.08] bg-zinc-50 p-6">
+          <p className="text-base font-medium text-zinc-950">
+            Choose a payment method now.
+          </p>
+          <ol className="flex flex-col gap-2 text-base leading-7 text-zinc-600">
+            <li>
+              1. Choose online payment and receive now your membership
+              confirmation and e-member card directly in your Apple/Google
+              Wallet.
+            </li>
+            <li>
+              2. Choose &ldquo;In-person payment&rdquo; otherwise and finalise
+              your payment using card/cash during INKOM or during ELSA&rsquo;s
+              office hours.
+            </li>
+          </ol>
+          <p className="text-base leading-7 text-zinc-600">
+            Your membership will only be activated when payment is confirmed.
+          </p>
+        </div>
+
         {state.formError && (
           <p role="alert" className={errorClass}>
             {state.formError}
           </p>
         )}
+        {state.errors.paymentMethod && (
+          <p role="alert" className={errorClass}>
+            {state.errors.paymentMethod}
+          </p>
+        )}
 
-        <button
-          type="submit"
-          disabled={isPending || consentRefused}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:cursor-not-allowed disabled:opacity-60 md:w-[158px]"
-        >
-          {isPending ? "Submitting..." : "Submit"}
-        </button>
+        {/* Two submit buttons in one form: whichever is pressed contributes
+            its own paymentMethod value, so the server knows which path to
+            take. Both save the sign-up first. */}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <button
+            type="submit"
+            name="paymentMethod"
+            value="online"
+            disabled={isPending || consentRefused}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {isPending ? "Submitting..." : "Send and continue to checkout"}
+          </button>
+          <button
+            type="submit"
+            name="paymentMethod"
+            value="in_person"
+            disabled={isPending || consentRefused}
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 text-base font-medium transition-colors hover:border-transparent hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            In-person payment
+          </button>
+        </div>
       </form>
     </PageShell>
   );

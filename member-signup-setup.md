@@ -1,4 +1,4 @@
-                       Join / Renew Membership
+                  Join / Renew Membership
                              │
                              ▼
                     ┌──────────────────┐

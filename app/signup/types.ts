@@ -21,6 +21,11 @@ export type SignUpState = {
   /** Row id of the stored sign-up, used later to resume at checkout. */
   pendingMemberId?: string;
   values?: SignUpValues;
+  /**
+   * Which button produced this state. Only ever "in_person" on success — the
+   * "online" path redirects to checkout instead of rendering a success screen.
+   */
+  paymentMethod?: "online" | "in_person";
 };
 
 export const initialSignUpState: SignUpState = { status: "idle", errors: {} };

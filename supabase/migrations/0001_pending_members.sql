@@ -26,6 +26,10 @@ create table if not exists public.pending_members (
   membership text not null,
   membership_price_cents integer not null,
 
+  -- Which submit button was used. Not proof of payment: both paths leave
+  -- status = 'pending' until payment is actually confirmed.
+  payment_method text not null,
+
   academic_year text not null default '2026/2027',
 
   -- 'pending'  : form submitted, not yet paid
@@ -51,6 +55,9 @@ create table if not exists public.pending_members (
       'Full-year Membership (INKOM price) - 13.50€',
       '1-semester membership - 9€'
     )),
+
+  constraint pending_members_payment_method_check
+    check (payment_method in ('online', 'in_person')),
 
   -- Consent is required to hold the row at all; enforced in the form and here.
   constraint pending_members_data_consent_check

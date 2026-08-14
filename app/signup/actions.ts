@@ -1,11 +1,14 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import {
   ACADEMIC_YEAR,
   STUDY_PROGRAMS,
   YES_NO,
   findMembership,
+  isPaymentMethod,
 } from "./constants";
 import type { SignUpState, SignUpValues } from "./types";
 
@@ -32,6 +35,10 @@ export async function submitMembership(
   const dataConsent = readField(formData, "dataConsent");
   const newsletter = readField(formData, "newsletter");
   const membership = readField(formData, "membership");
+
+  // Both submit buttons share this form; the pressed one contributes its own
+  // name/value pair, which is how we tell the two paths apart.
+  const paymentMethod = readField(formData, "paymentMethod");
 
   const values: SignUpValues = {
     email,
@@ -88,10 +95,17 @@ export async function submitMembership(
     errors.membership = "Please select a membership.";
   }
 
-  // The `!selectedMembership` arm is redundant at runtime — an unknown tier
-  // has already set errors.membership — but it lets the compiler treat
-  // selectedMembership as defined for the rest of the function.
-  if (Object.keys(errors).length > 0 || !selectedMembership) {
+  if (!isPaymentMethod(paymentMethod)) {
+    errors.paymentMethod = "Please choose a payment method.";
+  }
+
+  // The extra arms are redundant at runtime — the checks above already set the
+  // matching error — but they let the compiler narrow both values below.
+  if (
+    Object.keys(errors).length > 0 ||
+    !selectedMembership ||
+    !isPaymentMethod(paymentMethod)
+  ) {
     return { status: "error", errors, values };
   }
 
@@ -122,7 +136,10 @@ export async function submitMembership(
         newsletter: newsletter === "Yes",
         membership: selectedMembership.label,
         membership_price_cents: selectedMembership.priceCents,
+        payment_method: paymentMethod,
         academic_year: ACADEMIC_YEAR,
+        // Both paths stay 'pending'. Neither button takes money, so the
+        // membership is only activated once payment is actually confirmed.
         status: "pending",
       },
       { onConflict: "email,academic_year" },
@@ -142,7 +159,17 @@ export async function submitMembership(
     };
   }
 
-  // Next step (not built yet): redirect("/checkout?member=" + data.id) so the
-  // member pays. The id is returned here so checkout can pick this row up.
-  return { status: "success", errors: {}, pendingMemberId: data.id };
+  // The sign-up is stored either way. Only the next step differs.
+  if (paymentMethod === "online") {
+    // Must be called outside try/catch: redirect() signals by throwing, and a
+    // catch block would swallow it. Checkout looks the row up by this id.
+    redirect(`/checkout?member=${data.id}`);
+  }
+
+  return {
+    status: "success",
+    errors: {},
+    pendingMemberId: data.id,
+    paymentMethod,
+  };
 }

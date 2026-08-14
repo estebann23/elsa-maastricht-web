@@ -31,6 +31,21 @@ export function findMembership(label: string) {
   return MEMBERSHIPS.find((m) => m.label === label);
 }
 
+/**
+ * Which of the two submit buttons was pressed.
+ *
+ * Both store the sign-up identically; they differ only in what happens next —
+ * "online" continues to checkout, "in_person" ends on a confirmation message.
+ * Neither marks the membership as paid: that waits on payment confirmation.
+ */
+export const PAYMENT_METHODS = ["online", "in_person"] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export function isPaymentMethod(value: string): value is PaymentMethod {
+  return (PAYMENT_METHODS as readonly string[]).includes(value);
+}
+
 export type StudyProgram = (typeof STUDY_PROGRAMS)[number];
 export type YesNo = (typeof YES_NO)[number];
 export type MembershipLabel = (typeof MEMBERSHIPS)[number]["label"];
