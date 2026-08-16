@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { environmentOf, getCheckout, type CheckoutStatus } from "@/lib/sumup/server";
+import {
+  environmentMismatch,
+  environmentOf,
+  getCheckout,
+  type CheckoutStatus,
+} from "@/lib/sumup/server";
 
 /**
  * The single place where an online payment is allowed to change membership
@@ -21,6 +26,17 @@ export type SyncResult = {
   /** True once the membership is recorded as paid, whenever that happened. */
   confirmed: boolean;
   failureReason?: string;
+  /**
+   * True once a payment has been run against this checkout — a card submitted,
+   * or an APM like iDEAL started.
+   *
+   * A checkout stays PENDING both before anyone touches it and after someone
+   * starts an iDEAL payment and cancels at their bank, so status alone cannot
+   * tell those apart. SumUp rejects a second attempt on an already-processed
+   * checkout with 409 SESSION_ALREADY_PROCESSED, so this is what decides
+   * whether a checkout can still be offered to the member.
+   */
+  processed: boolean;
 };
 
 export async function syncCheckoutStatus(
@@ -39,12 +55,12 @@ export async function syncCheckoutStatus(
 
   if (attemptError) {
     console.error("Could not load payment attempt:", attemptError);
-    return { status: "unknown", confirmed: false };
+    return { status: "unknown", confirmed: false, processed: false };
   }
 
   if (!attempt) {
     console.warn("Ignoring unknown checkout id:", checkoutId);
-    return { status: "unknown", confirmed: false };
+    return { status: "unknown", confirmed: false, processed: false };
   }
 
   const checkout = await getCheckout(checkoutId);
@@ -63,6 +79,18 @@ export async function syncCheckoutStatus(
     );
   }
 
+  // A sandbox checkout must never confirm a membership on a live deployment:
+  // sandbox approves test cards, so that would hand out memberships for free.
+  const mismatch = environmentMismatch(checkout);
+
+  if (mismatch) {
+    console.error(`Refusing to act on checkout ${checkoutId}. ${mismatch}`);
+  }
+
+  // Any transaction at all means SumUp has already run a payment against this
+  // checkout, so it can no longer be offered for a fresh attempt.
+  const processed = (checkout.transactions?.length ?? 0) > 0;
+
   const failureReason =
     status === "FAILED" || status === "EXPIRED"
       ? (checkout.transactions?.[0]?.status ?? status)
@@ -79,12 +107,12 @@ export async function syncCheckoutStatus(
     })
     .eq("id", attempt.id);
 
-  if (status !== "PAID" || !amountMatches || !attempt.pending_member_id) {
-    return { status, confirmed: false, failureReason };
+  if (mismatch || status !== "PAID" || !amountMatches || !attempt.pending_member_id) {
+    return { status, confirmed: false, failureReason, processed };
   }
 
   const confirmed = await confirmMembership(attempt.pending_member_id);
-  return { status, confirmed };
+  return { status, confirmed, processed };
 }
 
 /**

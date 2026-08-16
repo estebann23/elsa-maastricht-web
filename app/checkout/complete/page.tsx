@@ -3,6 +3,7 @@ import Link from "next/link";
 import { syncCheckoutStatus } from "@/lib/membership/fulfil";
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { Notice, PageShell } from "../shell";
+import { PendingResult } from "./pending";
 
 // Verification happens on every load, so this page must never be cached.
 export const dynamic = "force-dynamic";
@@ -94,13 +95,14 @@ export default async function CheckoutComplete({
     );
   }
 
+  // PENDING is ambiguous after a redirect payment method: the bank may still be
+  // settling, or the member may have cancelled — SumUp leaves the checkout
+  // PENDING either way. Hand it to the client component, which re-checks a few
+  // times before deciding, rather than declaring "still processing" here.
   if (status === "PENDING") {
     return (
       <PageShell>
-        <Notice
-          title="Your payment is still processing"
-          body="This can take a moment. Refresh this page shortly to see the result — do not pay again."
-        />
+        <PendingResult checkoutId={attempt.checkout_id} memberId={member} />
       </PageShell>
     );
   }

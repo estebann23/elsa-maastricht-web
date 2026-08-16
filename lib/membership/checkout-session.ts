@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
-import { createCheckout, isSumUpConfigured, SumUpError } from "@/lib/sumup/server";
+import {
+  createCheckout,
+  getExpectedEnvironment,
+  isSumUpConfigured,
+  SumUpError,
+} from "@/lib/sumup/server";
 import { syncCheckoutStatus } from "./fulfil";
 
 export type CheckoutSession =
@@ -70,11 +75,26 @@ export async function startCheckout(
   // SumUp's guidance for an abandoned payment is to retrieve the existing
   // checkout before deciding a new one is needed, and it keeps a refresh from
   // filling the table with dead attempts.
-  const { data: existing } = await supabase
+  //
+  // Scoped to the account we are currently configured for. An attempt left over
+  // from the sandbox phase is useless to us now: mounting the widget on a
+  // sandbox checkout would take a card payment that never actually charges, and
+  // the environment guard would then refuse to confirm the membership — the
+  // member pays nothing, receives nothing, and a reload does it all again.
+  // Ignoring those rows makes the next block open a fresh checkout instead.
+  const environment = getExpectedEnvironment();
+
+  let query = supabase
     .from("payment_attempts")
     .select("checkout_id")
     .eq("pending_member_id", member.id)
-    .not("checkout_id", "is", null)
+    .not("checkout_id", "is", null);
+
+  if (environment) {
+    query = query.eq("environment", environment);
+  }
+
+  const { data: existing } = await query
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -85,11 +105,19 @@ export async function startCheckout(
       if (synced.status === "PAID" && synced.confirmed) {
         return { state: "paid", member: summary };
       }
-      if (synced.status === "PENDING") {
+      // Only a checkout nobody has paid against yet can be handed back. Once a
+      // payment has been run on it — a card submitted, or an iDEAL payment
+      // started and then cancelled at the bank — SumUp answers a second attempt
+      // with 409 SESSION_ALREADY_PROCESSED, so re-mounting the widget on it
+      // would strand the member on a form that can never succeed. SumUp's own
+      // guidance for an abandoned payment is to "use a new unique reference for
+      // a genuinely new payment attempt".
+      if (synced.status === "PENDING" && !synced.processed) {
         return { state: "ready", checkoutId: existing.checkout_id, member: summary };
       }
-      // FAILED or EXPIRED: fall through and open a fresh checkout, which needs
-      // a new reference of its own.
+      // FAILED, EXPIRED, or a PENDING checkout that has already been attempted:
+      // fall through and open a fresh checkout, which needs a new reference of
+      // its own.
     } catch (cause) {
       // A checkout SumUp no longer knows about should not block a retry.
       console.error("Could not re-check existing checkout:", cause);
@@ -121,6 +149,10 @@ async function createFreshCheckout(
       amount_cents: summary.amountCents,
       currency: "EUR",
       status: "PENDING",
+      // Stated rather than left to the column default, so an attempt whose
+      // checkout never gets created is still labelled with the account it was
+      // meant for. Overwritten below with what SumUp actually reports.
+      environment: getExpectedEnvironment() ?? "live",
     })
     .select("id")
     .single();

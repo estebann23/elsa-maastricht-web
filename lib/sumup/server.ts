@@ -16,17 +16,48 @@ function readEnv(...names: string[]): string | undefined {
 
 /**
  * Secret API key (`sup_sk_...`). Sent as `Authorization: Bearer`.
- *
- * We accept SUMUP_API_KEY too, which is the name SumUp's own SDK and docs use,
- * so a deployment configured either way works.
+
  */
 export function getSumUpApiKey(): string | undefined {
-  return readEnv("ONLINE_PAYMENT_KEY", "SUMUP_API_KEY");
+  return readEnv("SUMUP_API_KEY");
 }
 
-/** The merchant account that receives the payment, e.g. `M7RDS91...`. */
+/** The merchant account that receives the payment, e.g. `MEU26HSP`. */
 export function getSumUpMerchantCode(): string | undefined {
-  return readEnv("SANDBOX_MERCHANT_CODE", "SUMUP_MERCHANT_CODE");
+  return readEnv("SUMUP_MERCHANT_CODE");
+}
+
+/**
+ * Which account this deployment is *meant* to be using, from SUMUP_ENVIRONMENT.
+ *
+ * Optional, and only ever used to catch a mismatch: SumUp tells us what the
+ * account actually is on every checkout, so this is the expectation we hold that
+ * answer up against. Unset means no check.
+ */
+export function getExpectedEnvironment(): "sandbox" | "live" | undefined {
+  const value = readEnv("SUMUP_ENVIRONMENT")?.toLowerCase();
+  return value === "sandbox" || value === "live" ? value : undefined;
+}
+
+/**
+ * Guards against the two ways a credential mix-up costs real money.
+ *
+ * Believing we are live while running on sandbox is the expensive one: sandbox
+ * approves test cards, so every "payment" would confirm a membership nobody
+ * paid for. The reverse — believing we are testing while pointed at the live
+ * account — charges real cards during a test run. Both are silent without this.
+ */
+export function environmentMismatch(checkout: SumUpCheckout): string | undefined {
+  const expected = getExpectedEnvironment();
+  if (!expected) return undefined;
+
+  const actual = environmentOf(checkout);
+  if (actual === expected) return undefined;
+
+  return (
+    `SUMUP_ENVIRONMENT is "${expected}" but SumUp processed checkout ` +
+    `${checkout.id} on a ${actual} account (merchant ${checkout.merchant_code}).`
+  );
 }
 
 /**
@@ -95,8 +126,8 @@ async function request<T>(
 
   if (!apiKey) {
     throw new Error(
-      "SumUp is not configured. Set ONLINE_PAYMENT_KEY and " +
-        "SANDBOX_MERCHANT_CODE in .env.local (see .env.example).",
+      "SumUp is not configured. Set SUMUP_API_KEY and " +
+        "SUMUP_MERCHANT_CODE in .env.local (see .env.example).",
     );
   }
 
@@ -164,7 +195,7 @@ export async function createCheckout(params: {
 
   if (!merchantCode) {
     throw new Error(
-      "SumUp merchant code is missing. Set SANDBOX_MERCHANT_CODE in .env.local.",
+      "SumUp merchant code is missing. Set SUMUP_MERCHANT_CODE in .env.local.",
     );
   }
 
