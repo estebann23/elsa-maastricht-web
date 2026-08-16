@@ -1,0 +1,146 @@
+# 3D Secure authentication
+
+import Callout from "@components/content/Callout";
+
+3D Secure (3DS) lets a card issuer authenticate a cardholder during an online card payment. SumUp supports EMV 3DS and starts authentication when it is required for the transaction.
+
+Your integration must support the [two primary EMV 3DS flows](https://www.emvco.com/dynamic/emv-3-d-secure-whitepaper-v2/introduction/):
+
+- **Frictionless flow:** The issuer completes its assessment without asking the customer to take action.
+- **Challenge flow:** The issuer asks the customer to verify the payment, for example in their banking app or with a one-time passcode.
+
+<Callout type="note">
+
+You cannot determine whether a customer will be challenged. SumUp, the card scheme, and the issuer evaluate the payment and applicable regulatory requirements. Always handle an authentication step when SumUp returns one.
+
+</Callout>
+
+## 3D Secure and Strong Customer Authentication
+
+Strong Customer Authentication (SCA) generally requires a customer to authenticate with at least two independent factors:
+
+- Something they know, such as a password or PIN
+- Something they possess, such as a phone or authentication device
+- Something they are, such as a fingerprint or facial recognition
+
+SCA applies to many customer-initiated electronic payments in the European Economic Area and the United Kingdom. An exemption or an out-of-scope transaction can mean that SCA is not applied. An issuer can also require 3DS in markets where SCA is not a regulatory requirement.
+
+3DS is the authentication protocol used for online card payments; SCA is the regulatory requirement. A 3DS flow does not always display a challenge, and the absence of a challenge does not mean that 3DS was skipped.
+
+## Choose an integration path
+
+| Integration                                                    | 3DS responsibility                                                                                                                                                      |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Hosted Checkout](/online-payments/checkouts/hosted-checkout/) | SumUp presents the payment and authentication flow on the hosted page. Your backend verifies the final checkout status.                                                 |
+| [Payment Widget](/online-payments/checkouts/card-widget/)      | The widget presents the authentication flow. Its `onResponse` callback can emit `auth-screen` when a challenge starts. Your backend verifies the final checkout status. |
+
+Choose Hosted Checkout for a SumUp-hosted payment page or the Payment Widget for an embedded checkout.
+
+## How the payment flow works
+
+1. Your backend [creates a checkout](/api/checkouts/create) with a unique `checkout_reference` and a `redirect_url`.
+2. The customer submits their payment through Hosted Checkout or the Payment Widget.
+3. SumUp and the issuer determine whether the payment can proceed without customer interaction or requires a challenge.
+4. For a challenge, the customer authenticates directly with their issuer.
+5. The customer returns to your `redirect_url` after the external flow finishes.
+6. Your backend [retrieves the checkout](/api/checkouts/get) and uses its status as the source of truth.
+
+<Callout type="caution">
+
+Reaching the `redirect_url`, receiving a frontend callback, or completing a challenge does not prove that the payment succeeded. Fulfill the order only after your backend retrieves the checkout and confirms that its status is `PAID`.
+
+</Callout>
+
+## Frictionless and challenge flows
+
+### Frictionless flow
+
+The issuer uses transaction, device, and account information to assess the payment without asking the customer to take action. Your application might not display an authentication screen.
+
+Continue to verify the checkout on your backend. A frictionless customer experience does not change how you confirm the final payment result.
+
+### Challenge flow
+
+The issuer asks the customer to complete an authentication step. The challenge interface and available authentication methods are controlled by the issuer and can vary between cards and customers.
+
+Your application must allow the customer to:
+
+- Leave your checkout for a full-page authentication flow when requested
+- Return to the `redirect_url`
+- Retry with another card after failed or unavailable authentication
+- Safely abandon or resume the order without creating a duplicate charge
+
+## SCA exemptions and out-of-scope payments
+
+The [EU regulatory technical standards for SCA](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32018R0389) include exemptions intended to reduce unnecessary customer friction. The issuer always makes the final authentication decision and can request a challenge even when a payment appears to qualify for an exemption.
+
+<Callout type="note">
+
+The SumUp Checkouts API does not expose a merchant-selectable SCA exemption parameter. Do not base your integration on a specific exemption being applied. Build it to handle both frictionless and challenge outcomes for every customer-initiated card payment.
+
+</Callout>
+
+Common exemption categories include:
+
+| Category                  | What it means for your integration                                                                                                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Low-value payment         | In the EEA, a remote payment of up to €30 can qualify, subject to cumulative amount and consecutive-payment limits. The issuer tracks those limits and can still require authentication.                    |
+| Transaction risk analysis | A payment service provider can request an exemption for a qualifying low-risk payment when regulatory fraud-rate and risk-analysis conditions are met. This is not a decision your checkout frontend makes. |
+| Recurring payment         | SCA is normally required when the customer establishes or changes a series of payments for the same amount and recipient. Later payments in that series can qualify for an exemption.                       |
+| Trusted beneficiary       | A customer can designate a business as trusted through a service offered by their issuer. The issuer controls the list and decides whether to apply the exemption.                                          |
+
+Some payments are outside the scope of SCA rather than exempt. For example, a properly established merchant-initiated transaction can be out of scope when it is made without the customer actively participating. It must be linked to the customer's original consent and authenticated setup. See [Tokenization and recurring payments](/online-payments/guides/tokenization-with-payment-sdk/) for the supported SumUp flow.
+
+Thresholds and eligibility differ by market and can change. Do not use the categories above as legal advice or implement exemption rules in your frontend.
+
+## Liability and disputes
+
+Successful 3DS authentication can shift liability for some fraud-related chargebacks from the merchant to the issuer. The exact outcome depends on the card scheme, market, authentication result, and whether the authentication data was correctly linked to the authorization.
+
+3DS does not guarantee liability protection:
+
+- A successful payment status does not by itself confirm a liability shift.
+- An exemption can leave fraud liability with the merchant or acquirer.
+- Liability rules for attempted authentication vary by card scheme and region.
+- 3DS does not prevent disputes unrelated to unauthorized card use, such as goods not received, goods not as described, duplicate processing, or refund disputes.
+- You must still keep order, delivery, refund, and customer-communication evidence.
+
+Treat 3DS as one part of fraud prevention, not as a replacement for risk controls or dispute management.
+
+## Test your integration
+
+Use a sandbox merchant account and the test cards below. Use any future expiry date, such as `12/30`, and any three-digit CVV, such as `123`.
+
+| Scenario                         | Test card                  | Expected behavior                                                               |
+| -------------------------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| Frictionless success             | VISA `4200 0000 0000 0091` | Payment completes without a challenge screen.                                   |
+| Challenge required               | VISA `4200 0000 0000 0042` | The issuer challenge is presented before the payment can complete.              |
+| Authentication technical failure | VISA `4012 0010 3746 1114` | Authentication fails because of a simulated technical error.                    |
+| Cardholder not enrolled          | VISA `4012 0010 3714 1112` | Authentication cannot complete because the cardholder is not enrolled.          |
+| Issuer not participating         | VISA `4532 4970 8877 1651` | Authentication cannot complete because the card or issuer does not participate. |
+
+For more card schemes and scenarios, see [Testing online payments](/online-payments/testing/).
+
+Verify all of the following before going live:
+
+- [ ] A frictionless payment completes without waiting for a challenge event.
+- [ ] An iframe or browser challenge can be completed and returns the customer to your site.
+- [ ] Your backend verifies `PAID` before fulfillment.
+- [ ] A failed or abandoned challenge never produces a paid order in your system.
+- [ ] Refreshing the return page does not submit or fulfill the order twice.
+- [ ] A delayed final status is reconciled without creating a second checkout.
+- [ ] Logs include the checkout ID, checkout reference, timestamps, and final status, but no card data, secrets, or complete authentication payloads.
+
+## Troubleshooting
+
+| Symptom                                                  | What to check                                                                                                                                                                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No challenge screen appears                              | This can be a valid frictionless outcome. Retrieve the checkout instead of treating the missing challenge as an error.                                                                                                              |
+| `next_step` is returned but the challenge does not open  | Use the returned method and URL without modification, submit every payload field, and use a mechanism listed in the response. Check HTTPS, Content Security Policy, popup blocking, and iframe restrictions in the browser console. |
+| The Payment Widget emits `auth-screen`                   | This is expected when challenge authentication starts. Wait for the next callback, then verify the checkout from your backend.                                                                                                      |
+| The customer returns but the checkout is still `PENDING` | Do not fulfill or immediately create a replacement checkout. Retry retrieval with bounded backoff and reconcile the result through your backend.                                                                                    |
+| Authentication fails or the card is not enrolled         | Keep the order unpaid, show a recoverable message, and let the customer retry or choose another card. Do not expose issuer or gateway internals in the message.                                                                     |
+| The customer abandons the challenge                      | Keep the order unpaid. Retrieve the existing checkout before deciding whether a new checkout is needed, and use a new unique reference for a genuinely new payment attempt.                                                         |
+| The customer is challenged repeatedly                    | Confirm that you are not creating multiple checkouts for the same attempt. Challenge decisions remain issuer-controlled and cannot be disabled by the client.                                                                       |
+
+When contacting support, provide the checkout ID, checkout reference, merchant code, approximate timestamp, environment, and final status. Never send card details, API keys, or the complete authentication payload.

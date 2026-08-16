@@ -1,0 +1,240 @@
+# Testing
+
+import { Steps } from "@astrojs/starlight/components";
+import Callout from "@components/content/Callout";
+import Table from "@components/content/Table";
+
+Testing your online payments integration is crucial before going live. SumUp provides sandbox merchant accounts and a comprehensive set of test cards to simulate various payment scenarios, including different 3D Secure authentication flows.
+
+## Setting up a Sandbox Merchant Account
+
+Before you can test online payments, you need to create a sandbox merchant account in the SumUp Dashboard.
+
+<Steps>
+
+1. Log in to your SumUp account.
+2. Open [Developer Settings](https://me.sumup.com/settings/developer?tab=sandboxes).
+3. In the **Sandboxes** tab, create a sandbox merchant account if you do not have one yet.
+
+</Steps>
+
+<Callout type="note">
+  If you don't have a sandbox account yet, [sign up for a developer
+  account](https://me.sumup.com/signup?signup_intent=developer). This starts you with a
+  sandbox merchant account.
+</Callout>
+
+<Callout type="note">
+  Sandbox merchant accounts **do not** process transactions with real funds. All
+  transactions are simulated for testing purposes only.
+</Callout>
+
+## How to Use Test Cards
+
+When testing with card payments, you can use the following common details for all test cards:
+
+- **CVV**: Any 3 digits (e.g., `123`)
+- **Expiry Date**: Any future date (e.g., `12/30`)
+- **Cardholder Name**: Any name
+
+## Test Successful Payments
+
+Use this section as your primary end-to-end test path. It validates that a payment can be completed successfully without additional customer authentication steps.
+
+What to verify:
+
+1. Your checkout completes successfully without additional cardholder action
+2. You correctly handle frictionless authentication and continue order processing
+3. Your success path is robust across different card brands
+
+<Table
+  columns={[
+    { key: "icon", label: "", size: 24 },
+    { key: "brand", label: "Brand", nowrap: true },
+    { key: "number", label: "Card Number", nowrap: true, as: "code" },
+    { key: "behavior", label: "Expected Behavior", minWidth: "18rem" },
+  ]}
+  rows={[
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0091", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0109", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0026", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0059", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0007", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0023", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0056", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0106", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "maestro", brand: "MAESTRO", number: "6761 3010 0099 3772", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "maestro", brand: "MAESTRO", number: "6706 9811 1111 1113", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "maestro", brand: "MAESTRO", number: "6799 8510 0000 0032", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "maestro", brand: "MAESTRO", number: "6007 9301 2345 6780", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "american_express", brand: "American Express", number: "374 5002 6200 1008", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "american_express", brand: "American Express", number: "377 2770 8138 2243", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "american_express", brand: "American Express", number: "375 9870 0000 0062", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "american_express", brand: "American Express", number: "373 9531 9235 1004", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "discover", brand: "Diners / Discover", number: "36 1775 8067 7072", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 0004 0000 1008", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 0100 0000 0003", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 0009 9009 9818", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "jcb", brand: "JCB", number: "3530 1113 3330 0000", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "jcb", brand: "JCB", number: "3566 0020 2036 0505", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1227 8361", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1227 8353", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9954 2085 3334", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9995 3113 7108", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9916 5867 2173", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9915 0365 5373", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0014", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0022", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0089", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9442 2091 4108", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 9972 1273 7146", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 9933 5156 0670", behavior: "Authentication is attempted and payment proceeds without challenge." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 9949 4294 1098", behavior: "Payment succeeds with frictionless authentication." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 9916 9450 4181", behavior: "Authentication is attempted and payment proceeds without challenge." },
+  ]}
+/>
+
+## Test Unsuccessful Payments
+
+Use this section to verify how your integration handles declined or failed payments.
+
+To simulate an unsuccessful payment, create a checkout for amount `11.00`, `42.01`, `42.76`, or `42.91` (depending on currency, for example `4201` in minor units[^minor_units]). These amounts result in a failed payment.
+
+What to verify:
+
+1. Your frontend displays a clear failure message and allows safe retry
+2. Your backend marks the payment as failed and avoids creating a successful order
+3. Your logs and monitoring capture the failure reason for troubleshooting
+
+## Test 3D Secure Authentication
+
+3D Secure (3DS) adds an authentication step between payment submission and final authorization when issuer verification is required.
+
+Use the [Payment Widget](/online-payments/checkouts/card-widget/) to test card payments. It handles authentication screens and redirect behavior for you.
+
+### Successful 3D Secure Authentication Scenarios
+
+For Payment Widget integrations, `onResponse` can emit `auth-screen` when challenge authentication starts. After challenge completion, verify the final checkout result on your backend with [Retrieve a checkout](/api/checkouts/get).
+
+What to verify:
+
+1. Your frontend handles challenge redirects and return URLs correctly
+2. Your backend waits for the final authentication result before fulfillment
+3. Retry and timeout handling behaves correctly when users abandon the challenge
+
+<Table
+  columns={[
+    { key: "icon", label: "", size: 24 },
+    { key: "brand", label: "Brand", nowrap: true },
+    { key: "number", label: "Card Number", nowrap: true, as: "code" },
+    { key: "behavior", label: "Expected Behavior", minWidth: "18rem" },
+  ]}
+  rows={[
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0042", behavior: "3D Secure challenge is required." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0067", behavior: "3D Secure challenge is required." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0018", behavior: "3D Secure challenge is required." },
+    { icon: "visa", brand: "VISA", number: "4200 0000 0000 0075", behavior: "3D Secure challenge is required." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0015", behavior: "3D Secure challenge is required." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0049", behavior: "3D Secure challenge is required." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0064", behavior: "3D Secure challenge is required." },
+    { icon: "mastercard", brand: "Mastercard", number: "5200 0000 0000 0072", behavior: "3D Secure challenge is required." },
+    { icon: "maestro", brand: "MAESTRO", number: "679 9998 9000 0006 0018", behavior: "3D Secure challenge is required." },
+    { icon: "maestro", brand: "MAESTRO", number: "6773 6700 0911 4879", behavior: "3D Secure challenge is required." },
+    { icon: "maestro", brand: "MAESTRO", number: "6 7034 2005 5456 5015", behavior: "3D Secure challenge is required." },
+    { icon: "maestro", brand: "MAESTRO", number: "6759 8888 8888 8888", behavior: "3D Secure challenge is required." },
+    { icon: "american_express", brand: "American Express", number: "343 4343 4343 4343", behavior: "3D Secure challenge is required." },
+    { icon: "american_express", brand: "American Express", number: "375 9870 0000 0021", behavior: "3D Secure challenge is required." },
+    { icon: "american_express", brand: "American Express", number: "375 9870 0016 9867", behavior: "3D Secure challenge is required." },
+    { icon: "american_express", brand: "American Express", number: "371 4496 3539 8431", behavior: "3D Secure challenge is required." },
+    { icon: "discover", brand: "Diners / Discover", number: "36 2596 0000 0004", behavior: "3D Secure challenge is required." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 2087 0111 7775", behavior: "3D Secure challenge is required." },
+    { icon: "discover", brand: "Diners / Discover", number: "6559 9065 5990 6557", behavior: "3D Secure challenge is required." },
+    { icon: "discover", brand: "Diners / Discover", number: "36 4588 1111 1119", behavior: "3D Secure challenge is required." },
+    { icon: "jcb", brand: "JCB", number: "3566 0023 4543 2153", behavior: "3D Secure challenge is required." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1009 5916", behavior: "3D Secure challenge is required." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1230 0876", behavior: "3D Secure challenge is required." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1230 0884", behavior: "3D Secure challenge is required." },
+    { icon: "dankort", brand: "Dankort", number: "4571 9912 6271 8985", behavior: "3D Secure challenge is required." },
+    { icon: "dankort", brand: "Dankort", number: "4571 9957 1262 8447", behavior: "3D Secure challenge is required." },
+    { icon: "dankort", brand: "Dankort", number: "4571 9984 7027 9619", behavior: "3D Secure challenge is required." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9917 0704 4788", behavior: "3D Secure challenge is required." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0097", behavior: "3D Secure challenge is required." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9441 9672 5207", behavior: "3D Secure challenge is required." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9496 4405 0173", behavior: "3D Secure challenge is required." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9458 8276 8112", behavior: "3D Secure challenge is required." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6461 7321 1993", behavior: "3D Secure challenge is required." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6478 2371 8742", behavior: "3D Secure challenge is required." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6188 4785 1199", behavior: "3D Secure challenge is required." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6180 8422 1908", behavior: "3D Secure challenge is required." },
+  ]}
+/>
+
+### 3D Secure Failure Scenarios
+
+Use these cards to validate failed authentication and non-participation behavior.
+
+These cards simulate:
+
+- Technical authentication errors
+- Cardholder not enrolled for 3D Secure
+- Card/issuer not participating in 3D Secure
+
+What to verify:
+
+1. You display actionable error messaging for technical authentication failures
+2. You handle non-enrolled and non-participating cards without crashing
+3. Failed payments do not create successful order states in your system
+
+<Table
+  columns={[
+    { key: "icon", label: "", size: 24 },
+    { key: "brand", label: "Brand", nowrap: true },
+    { key: "number", label: "Card Number", nowrap: true, as: "code" },
+    { key: "behavior", label: "Expected Behavior", minWidth: "18rem" },
+  ]}
+  rows={[
+    { icon: "visa", brand: "VISA", number: "4012 0010 3746 1114", behavior: "Authentication fails due to a technical error." },
+    { icon: "visa", brand: "VISA", number: "4012 0010 3714 1112", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "visa", brand: "VISA", number: "4532 4970 8877 1651", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "mastercard", brand: "Mastercard", number: "5434 5800 0000 0006", behavior: "Authentication fails due to a technical error." },
+    { icon: "mastercard", brand: "Mastercard", number: "5457 3500 7654 3210", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "mastercard", brand: "Mastercard", number: "5497 2608 4731 6287", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "maestro", brand: "MAESTRO", number: "6761 3010 0094 1201", behavior: "Authentication fails due to a technical error." },
+    { icon: "maestro", brand: "MAESTRO", number: "6761 3010 0094 6341", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "maestro", brand: "MAESTRO", number: "6761 2577 0783 6567", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "american_express", brand: "American Express", number: "375 9870 0016 9875", behavior: "Authentication fails due to a technical error." },
+    { icon: "american_express", brand: "American Express", number: "375 9870 0016 9883", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "american_express", brand: "American Express", number: "343 9230 9205 0144", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "discover", brand: "Diners / Discover", number: "6510 0000 0000 1248", behavior: "Authentication fails due to a technical error." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 0255 0026 5831", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "discover", brand: "Diners / Discover", number: "6011 4207 1174 6440", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "jcb", brand: "JCB", number: "3566 0077 7001 7510", behavior: "Authentication fails due to a technical error." },
+    { icon: "jcb", brand: "JCB", number: "3569 9900 1229 1497", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "jcb", brand: "JCB", number: "3096 0233 6337 9943", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "dankort", brand: "Dankort", number: "5019 9968 9072 9079", behavior: "Authentication fails due to a technical error." },
+    { icon: "dankort", brand: "Dankort", number: "4571 9957 0066 7571", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "dankort", brand: "Dankort", number: "4571 9933 1492 6574", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0048", behavior: "Authentication fails due to a technical error." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0030", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "union_pay", brand: "UnionPay", number: "6250 9470 0000 0052", behavior: "Card or issuer does not participate in 3D Secure." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 9957 3038 2544", behavior: "Authentication fails due to a technical error." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6495 1976 7306", behavior: "Cardholder is not enrolled for 3D Secure." },
+    { icon: "bancontact", brand: "Bancontact Link", number: "6703 6495 1976 7555", behavior: "Card or issuer does not participate in 3D Secure." },
+  ]}
+/>
+
+## Next Steps
+
+Once you've thoroughly tested your integration with your sandbox merchant account and test cards:
+
+1. Switch back to your live account in the Dashboard
+2. Ensure your production credentials are properly configured
+3. Process a small real transaction to verify everything works as expected
+4. Monitor your first transactions closely to ensure proper payment processing
+
+<Callout type="caution">
+  Remember to switch from your sandbox merchant account to your live merchant
+  account before accepting real payments from customers.
+</Callout>
+
+[^minor_units]: [Minor unit fractions](https://en.wikipedia.org/wiki/ISO_4217#Minor_unit_fractions) refer to the smallest denomination of a currency, which is used for representing transaction amounts. For example, if a currency has two decimal places, like USD (dollars and cents), the minor unit is the cent, and an amount is represented as a whole number of cents

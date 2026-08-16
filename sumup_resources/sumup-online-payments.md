@@ -1,0 +1,118 @@
+# Online Payments
+
+import { Steps } from '@astrojs/starlight/components';
+import Callout from '@components/content/Callout';
+import Image from '@components/content/Image.astro';
+
+Online payments form an integral part of the SumUp product portfolio. SumUp supports online payments through multiple approaches to address every merchant use case. Use one of the out-of-the-box integrations or build a complete custom payments flow with the APIs. Your app communicates with SumUp via HTTP requests defined in the [API Reference](/api).​
+
+![Image showing integrations in SumUp](/img/guides/integrations.png)
+
+To get started, review the options SumUp offers for managing online payments.
+
+## Getting a Sandbox Merchant Account
+
+To test SumUp APIs and tools without involving real money, use a sandbox merchant account. Create one from your Dashboard account as follows.
+
+<Steps>
+
+1. Log in to your SumUp account.
+2. Open [Developer Settings](https://me.sumup.com/settings/developer?tab=sandboxes).
+3. In the **Sandboxes** tab, create a sandbox merchant account if you do not have one yet.
+
+</Steps>
+
+<Callout type="note">
+If you don't have a sandbox account yet, [sign up for a developer account](https://me.sumup.com/signup?signup_intent=developer). This starts you with a sandbox merchant account.
+</Callout>
+
+<Image alt="A screenshot of the account selection dropdown in the SumUp dashboard with the sandbox merchant account highlighted with red circle" src="/img/guides/test_acc.png" width="40%" />
+
+With your sandbox merchant account, begin making API calls with real data. Sandbox merchant accounts **do not** process transactions with real funds. The sandbox merchant account has a different ID and displays a clear warning. Requests with a value of 11 (in any currency) always fail by design, to test failed transaction scenarios.
+
+<Image alt="A screenshot of the dashboard with sandbox merchant account selected" src="/img/guides/test-account-warning.png" width="100%" />
+
+When finished experimenting with the sandbox merchant account, switch back to a regular account for business purposes.
+
+## Authorization
+
+All online payment products use SumUp APIs, which require authorization via an API key or access token. See the [Authorization Guide](/tools/authorization/) for details on available options.​
+
+## Checkout Products
+
+SumUp provides a range of checkout products for seamless integration with your website.
+
+### Hosted Checkout
+
+Hosted Checkout is the fastest path to launch. SumUp hosts the payment page, while your integration creates the checkout and redirects the customer to the returned URL.
+
+See the [Hosted Checkout documentation](/online-payments/checkouts/hosted-checkout/) for details.
+
+### Payment Widget
+
+For an embedded checkout on your own site, use the [Payment Widget](/online-payments/checkouts/card-widget/). It only requires adding a single script to your payment page.
+
+#### Alternative Payment Methods
+
+The Payment Widget supports [Alternative Payment Methods](/online-payments/apm) (APMs) to accept payments beyond traditional card schemes such as Visa and Mastercard. To enable APMs for your Payment Widget integration, use the [contact form](/contact).
+
+Available APMs include:
+
+- Apple Pay
+- Bancontact
+- Blik
+- Boleto
+- EPS
+- Google Pay
+- iDeal
+- MyBank
+- PIX
+- Przelewy24
+- Satispay
+
+<Callout type="tip">
+The APMs you can offer depend on the location your business is registered and operates in.
+</Callout>
+
+<Callout type="note">
+See the [Payment Methods overview](/online-payments/payment-methods/) for the
+full list of supported methods grouped by payment method family.
+</Callout>
+
+### Swift Checkout SDK
+
+The Swift Checkout SDK provides a complete and fast checkout experience to your end users, collecting payment, address, and contact information with a click of a button.
+
+See the [Swift Checkout Documentation](/online-payments/checkouts/swift-checkout/) for details.
+
+## Plugins
+
+For Prestashop, Wix, or WooCommerce, use SumUp plugins for seamless payments. See the [Plugins section](/online-payments/plugins/) for details on each.​
+
+## Custom Integrations
+
+### SumUp APIs
+
+SumUp provides REST APIs for creating and retrieving checkouts, managing transactions, storing tokenized payment instruments, and issuing refunds. SumUp APIs use API keys or [OAuth 2.0](https://www.rfc-editor.org/rfc/rfc6749) for authentication.
+
+Call authenticated API endpoints from your server. Keep API keys and client secrets out of browsers and mobile apps.
+
+### Receiving Payments
+
+Start by [choosing a checkout integration](/online-payments/checkouts/). Your server creates a checkout with the amount, currency, merchant code, and a unique checkout reference. The selected checkout integration then collects the customer's payment details and completes the payment without sending raw card details through your server.
+
+SumUp supports the following payment paths:
+
+- [Hosted Checkout](/online-payments/checkouts/hosted-checkout/) redirects the customer to a SumUp-hosted payment page.
+- [Payment Widget](/online-payments/checkouts/card-widget/) embeds the SumUp payment form in your website.
+- [Swift Checkout SDK](/online-payments/checkouts/swift-checkout/) and the [React Native SDK](/online-payments/sdks/react-native/) provide checkout experiences for supported mobile use cases.
+- [Alternative Payment Methods](/online-payments/apm/) support wallets, bank-based methods, vouchers, and other locally available options.
+- [Tokenization and recurring payments](/online-payments/guides/tokenization-with-payment-sdk/) use a saved payment instrument rather than raw card details.
+
+Do not build a payment form that sends raw card details to the Checkouts API. Use one of the checkout integrations above to collect payment details.
+
+## Contact SumUp
+
+<Callout type="note">
+Do you have specific questions? Check out our [help page](/help) for the most frequently asked questions or [contact us here](/contact).
+</Callout>

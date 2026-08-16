@@ -8,11 +8,11 @@
 export const AUTHORISERS = [
   "President",
   "Secretary General",
-  "Aylin Mira Karabiyik",
+  "Aylin Karabiyik",
   "Patricie Svobodova",
   "Tutku Kasar",
   "Ioana Preda",
-  "Matti Paul Below",
+  "Matti Below",
   "Christos Tsalkitzis",
   "IT Team",
   "Directors (Any)",
