@@ -75,7 +75,7 @@ export async function createMembershipPass(params: {
     logoText: "ELSA Maastricht",
     organizationName: "European Law Students' Association Maastricht",
     colorPreset: "blue",
-    color: "#3b5dce",
+    color: "#0a3087",
     logoURL: ELSA_LOGO_DATA_URI,
     iconURL: ELSA_ICON_DATA_URI,
     stripURL: ELSA_STRIP_DATA_URI,
