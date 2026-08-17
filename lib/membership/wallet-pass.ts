@@ -7,6 +7,14 @@ import { createMembershipPass, isWalletConfigured } from "@/lib/wallet/server";
 export type MemberPass = {
   serialNumber: string;
   googleSaveUrl: string;
+  /**
+   * WalletWallet's own hosted install page for this card.
+   *
+   * Device-aware: it offers Apple or Google Wallet depending on what opened it.
+   * That is what the in-person flow links to, since a team member confirming a
+   * payment at a desk has no idea what phone the member is holding.
+   */
+  shareUrl?: string;
 };
 
 /**
@@ -90,6 +98,7 @@ export async function getOrCreateMemberPass(
     return {
       serialNumber: created.serialNumber,
       googleSaveUrl: created.googleSaveUrl,
+      shareUrl: created.shareUrl,
     };
   } catch (cause) {
     console.error("Could not issue a wallet pass:", cause);
@@ -102,7 +111,7 @@ async function readPass(memberId: string): Promise<MemberPass | null> {
 
   const { data } = await supabase
     .from("member_passes")
-    .select("serial_number, google_save_url")
+    .select("serial_number, google_save_url, share_url")
     .eq("pending_member_id", memberId)
     .maybeSingle();
 
@@ -111,5 +120,6 @@ async function readPass(memberId: string): Promise<MemberPass | null> {
   return {
     serialNumber: data.serial_number,
     googleSaveUrl: data.google_save_url,
+    shareUrl: data.share_url ?? undefined,
   };
 }

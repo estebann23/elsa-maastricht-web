@@ -65,7 +65,7 @@ export default function SignUp() {
             Thank you.
           </h1>
           <p className="mx-auto max-w-md text-lg leading-8 text-zinc-600">
-            Your sign-up has been processed. Your membership will be fully activated once you finalise the payment. You can pay using card or cash when visiting us during INKOM or during ELSA&rsquo;s office hours. Consult the <a href="/private/add-member" className="underline underline-offset-4 hover:text-zinc-950">official website</a> to check for latest office hours and location.
+            Your sign-up has been processed. Your membership will be fully activated once you finalise the payment. You can pay using card or cash when visiting us during INKOM or during ELSA&rsquo;s office hours. Consult the <a href="https://www.elsa-maastricht.org" className="underline underline-offset-4 hover:text-zinc-950">official website</a> to check for latest office hours and location.
           </p>
         </div>
       </PageShell>

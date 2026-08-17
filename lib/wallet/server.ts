@@ -2,7 +2,7 @@
 // this is ever pulled into a Client Component.
 import "server-only";
 
-import { ELSA_ICON_DATA_URI, ELSA_LOGO_DATA_URI } from "./brand-assets";
+import { ELSA_ICON_DATA_URI, ELSA_LOGO_DATA_URI, ELSA_STRIP_DATA_URI} from "./brand-assets";
 
 const API_BASE = "https://api.walletwallet.dev";
 
@@ -78,8 +78,9 @@ export async function createMembershipPass(params: {
     color: "#3b5dce",
     logoURL: ELSA_LOGO_DATA_URI,
     iconURL: ELSA_ICON_DATA_URI,
-    primaryFields: [{ label: "MEMBER CARD", value: params.memberName }],
-    secondaryFields: [{ label: "VALID", value: params.academicYear }],
+    stripURL: ELSA_STRIP_DATA_URI,
+    secondaryFields: [{ label: "NAME", value: params.memberName }],
+    headerFields: [{ label: "VALID", value: params.academicYear }],
     // An empty field carrying `changeMessage` is how a pass declares that it
     // can push notifications: Apple shows the message when the value changes,
     // and "%@" is the placeholder for the new value.

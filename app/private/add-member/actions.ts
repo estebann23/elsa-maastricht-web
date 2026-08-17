@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getOrCreateMemberPass } from "@/lib/membership/wallet-pass";
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { isAuthoriser } from "./constants";
 import type { ConfirmState } from "./types";
@@ -122,6 +123,16 @@ export async function confirmMember(
       formError: `${pending.first_name} ${pending.last_name} has already been confirmed.`,
     };
   }
+
+  // Issue the wallet card, exactly as a completed online payment does.
+  //
+  // Deliberately after the status update above, because getOrCreateMemberPass
+  // refuses to issue a card for a sign-up that is not recorded as paid — the
+  // card is proof of membership, so it must never exist before the payment
+  // does. Returns null on every failure rather than throwing, so a WalletWallet
+  // outage costs the card button and never the confirmation itself; the page
+  // asks again on load, which is what heals it.
+  await getOrCreateMemberPass(pending.id);
 
   // The member has just left the pending list, so the picker behind us is now
   // stale. Revalidate before navigating, not after: this page is force-dynamic,
