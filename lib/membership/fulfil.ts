@@ -37,6 +37,8 @@ export type SyncResult = {
    * whether a checkout can still be offered to the member.
    */
   processed: boolean;
+  /** The sign-up this checkout belongs to, when we still have one. */
+  memberId?: string;
 };
 
 export async function syncCheckoutStatus(
@@ -108,11 +110,22 @@ export async function syncCheckoutStatus(
     .eq("id", attempt.id);
 
   if (mismatch || status !== "PAID" || !amountMatches || !attempt.pending_member_id) {
-    return { status, confirmed: false, failureReason, processed };
+    return {
+      status,
+      confirmed: false,
+      failureReason,
+      processed,
+      memberId: attempt.pending_member_id ?? undefined,
+    };
   }
 
   const confirmed = await confirmMembership(attempt.pending_member_id);
-  return { status, confirmed, processed };
+  return {
+    status,
+    confirmed,
+    processed,
+    memberId: attempt.pending_member_id,
+  };
 }
 
 /**

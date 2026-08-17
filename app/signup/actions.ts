@@ -122,6 +122,51 @@ export async function submitMembership(
 
   const supabase = createServiceRoleClient();
 
+  // An existing member may not sign up again on the same address.
+  //
+  // Without this the upsert below reuses their row, and the sign-up flow hands
+  // a confirmed member a fresh, payable checkout — so someone who pays, gets no
+  // confirmation, and re-registers out of doubt is charged a second time. The
+  // second payment also records nothing new: confirmed_members already holds
+  // their row, so the insert collides on 23505 and is treated as success.
+  //
+  // Scoped to this membership year, since last year's members must be able to
+  // renew on the address they already use.
+  const { data: alreadyMember, error: memberLookupError } = await supabase
+    .from("confirmed_members")
+    .select("id")
+    .eq("email", email)
+    .eq("academic_year", ACADEMIC_YEAR)
+    .limit(1)
+    .maybeSingle();
+
+  if (memberLookupError) {
+    // Fail closed. Letting the sign-up through when we cannot tell whether they
+    // are already a member is exactly the case that ends in a double charge,
+    // and the upsert below would almost certainly fail for the same reason.
+    console.error("Could not check for an existing membership:", memberLookupError);
+    return {
+      status: "error",
+      errors: {},
+      values,
+      formError:
+        "We could not check your membership status. Please try again, and contact us if the problem continues.",
+    };
+  }
+
+  if (alreadyMember) {
+    // Reported against the email field rather than the form as a whole: that
+    // is the one value they have to change, and the form wires this key to the
+    // input's own error message and aria-invalid state.
+    return {
+      status: "error",
+      errors: {
+        email: `This email address is already an ELSA Maastricht member for ${ACADEMIC_YEAR}. Please use a different email address, or contact the ELSA board if you think this is a mistake.`,
+      },
+      values,
+    };
+  }
+
   // Upsert rather than insert: someone who fills the form twice before paying
   // should update their pending sign-up, not hit a duplicate-key error.
   const { data, error } = await supabase
@@ -138,9 +183,12 @@ export async function submitMembership(
         membership_price_cents: selectedMembership.priceCents,
         payment_method: paymentMethod,
         academic_year: ACADEMIC_YEAR,
-        // Both paths stay 'pending'. Neither button takes money, so the
-        // membership is only activated once payment is actually confirmed.
-        status: "pending",
+        // `status` is deliberately absent. On conflict Postgres only updates the
+        // columns named here, so leaving it out means a re-submission can never
+        // move a row backwards out of 'paid' — the guard above is the first line
+        // of defence, this is the one that holds even if it is ever bypassed. A
+        // new row still starts at 'pending' from the column default, which is
+        // correct: neither button takes money.
       },
       { onConflict: "email,academic_year" },
     )

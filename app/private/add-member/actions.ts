@@ -83,16 +83,7 @@ export async function confirmMember(
     payment_attested: true,
   });
 
-  if (writeError) {
-    // 23505 = unique violation, i.e. this sign-up was already confirmed.
-    if (writeError.code === "23505") {
-      return {
-        status: "error",
-        errors: {},
-        formError: `${pending.first_name} ${pending.last_name} has already been confirmed.`,
-      };
-    }
-
+  if (writeError && writeError.code !== "23505") {
     console.error("Failed to store confirmed member:", writeError);
     return {
       status: "error",
@@ -102,7 +93,35 @@ export async function confirmMember(
     };
   }
 
-  // The pending row is deliberately left in place for now.
+  // Mark the sign-up paid, exactly as the online payment path does.
+  //
+  // This is what stops a member who has already paid in cash from being charged
+  // a second time: /checkout refuses to open a payment for a row whose status is
+  // 'paid', and without this it stayed 'pending' forever, so a confirmed member
+  // following their old checkout link would be handed a fresh, payable SumUp
+  // checkout for the full membership price.
+  //
+  // Run for an already-confirmed member too (23505), which heals any row
+  // confirmed before this was fixed. The pending row itself is deliberately
+  // left in place.
+  const { error: statusError } = await supabase
+    .from("pending_members")
+    .update({ status: "paid" })
+    .eq("id", pending.id);
+
+  if (statusError) {
+    console.error("Could not mark sign-up as paid:", statusError);
+  }
+
+  if (writeError) {
+    // 23505 = unique violation, i.e. this sign-up was already confirmed.
+    return {
+      status: "error",
+      errors: {},
+      formError: `${pending.first_name} ${pending.last_name} has already been confirmed.`,
+    };
+  }
+
   revalidatePath("/private/add-member");
 
   return {

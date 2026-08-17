@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { verifyPayment } from "../actions";
+import { WalletButtons } from "../wallet-buttons";
 
 /** Re-checks after 2s, 4s, 6s, 8s — about 20 seconds in total. */
 const RETRY_DELAYS_MS = [2000, 4000, 6000, 8000];
@@ -34,6 +35,7 @@ export function PendingResult({
 }) {
   const [outcome, setOutcome] = useState<Outcome>("checking");
   const [attempt, setAttempt] = useState(0);
+  const [pass, setPass] = useState<{ serialNumber: string; googleSaveUrl: string }>();
   const cancelled = useRef(false);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export function PendingResult({
         if (result.paid) {
           // `paid` is also true when SumUp took the money but we could not
           // record it. Never show that member a failure.
+          setPass(result.pass);
           setOutcome(result.message ? "paid-unrecorded" : "paid");
           return;
         }
@@ -74,10 +77,18 @@ export function PendingResult({
 
   if (outcome === "paid") {
     return (
-      <Result
-        title="Payment received. Welcome to ELSA Maastricht."
-        body="Your membership is now active. A confirmation is on its way to your inbox, and your e-member card will be sent shortly to your inbox too."
-      />
+      <>
+        <Result
+          title="Payment received. Welcome to ELSA Maastricht."
+          body="Your membership is now active."
+        />
+        {pass && (
+          <WalletButtons
+            serialNumber={pass.serialNumber}
+            googleSaveUrl={pass.googleSaveUrl}
+          />
+        )}
+      </>
     );
   }
 

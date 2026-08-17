@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { syncCheckoutStatus } from "@/lib/membership/fulfil";
+import { getOrCreateMemberPass } from "@/lib/membership/wallet-pass";
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { Notice, PageShell } from "../shell";
+import { WalletButtons } from "../wallet-buttons";
 import { PendingResult } from "./pending";
 
 // Verification happens on every load, so this page must never be cached.
@@ -64,22 +66,34 @@ export default async function CheckoutComplete({
 
   let status = "unknown";
   let confirmed = false;
+  let memberId: string | undefined;
 
   try {
     const result = await syncCheckoutStatus(attempt.checkout_id);
     status = result.status;
     confirmed = result.confirmed;
+    memberId = result.memberId;
   } catch (cause) {
     console.error("Could not verify checkout on return:", cause);
   }
 
   if (status === "PAID" && confirmed) {
+    // Issued on first visit, reused on every later one. Null on any failure,
+    // so a wallet outage costs the buttons and never the confirmation.
+    const pass = memberId ? await getOrCreateMemberPass(memberId) : null;
+
     return (
       <PageShell>
         <Notice
           title="Payment received. Welcome to ELSA Maastricht."
-          body="Your membership is now active. A confirmation is on its way to your inbox, and your e-member card will follow shortly."
+          body="Your membership is now active."
         />
+        {pass && (
+          <WalletButtons
+            serialNumber={pass.serialNumber}
+            googleSaveUrl={pass.googleSaveUrl}
+          />
+        )}
       </PageShell>
     );
   }

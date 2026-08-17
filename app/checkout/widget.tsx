@@ -4,6 +4,7 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
 import { verifyPayment } from "./actions";
+import { WalletButtons } from "./wallet-buttons";
 
 const SDK_URL = "https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js";
 
@@ -40,6 +41,7 @@ export function PaymentWidget({
 }) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [message, setMessage] = useState<string>();
+  const [pass, setPass] = useState<{ serialNumber: string; googleSaveUrl: string }>();
   const cardRef = useRef<MountedCard | null>(null);
 
   // Mounting twice would render two payment forms, which React's development
@@ -87,6 +89,7 @@ export function PaymentWidget({
         setPhase("verifying");
         const result = await verifyPayment(checkoutId);
         setMessage(result.message);
+        setPass(result.pass);
         setPhase(result.paid ? "paid" : "failed");
         if (result.paid) cardRef.current?.unmount();
         return;
@@ -98,6 +101,7 @@ export function PaymentWidget({
         // so ask the server rather than assuming.
         setPhase("verifying");
         const result = await verifyPayment(checkoutId);
+        setPass(result.pass);
         setMessage(
           result.message ??
             (typeof body === "object" && body !== null && "message" in body
@@ -130,15 +134,20 @@ export function PaymentWidget({
 
   if (phase === "paid") {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex w-full flex-col items-center gap-6 text-center">
         <h2 className="text-2xl font-semibold leading-8 tracking-tight text-black">
           Payment received. Welcome to ELSA Maastricht.
         </h2>
         <p className="mx-auto max-w-md text-lg leading-8 text-zinc-600">
           {message ??
-            "Your membership is now active. A confirmation is on its way to " +
-              "your inbox, and your e-member card will follow shortly."}
+            "Your membership is now active."}
         </p>
+        {pass && (
+          <WalletButtons
+            serialNumber={pass.serialNumber}
+            googleSaveUrl={pass.googleSaveUrl}
+          />
+        )}
       </div>
     );
   }

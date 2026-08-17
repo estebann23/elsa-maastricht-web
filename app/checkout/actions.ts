@@ -1,11 +1,17 @@
 "use server";
 
 import { syncCheckoutStatus } from "@/lib/membership/fulfil";
+import { getOrCreateMemberPass } from "@/lib/membership/wallet-pass";
 
 export type VerifyResult = {
   paid: boolean;
   status: string;
   message?: string;
+  /**
+   * The member's wallet card, once the payment is confirmed. Absent when the
+   * card could not be issued, which never blocks the success message.
+   */
+  pass?: { serialNumber: string; googleSaveUrl: string };
 };
 
 /**
@@ -29,7 +35,13 @@ export async function verifyPayment(checkoutId: string): Promise<VerifyResult> {
     const result = await syncCheckoutStatus(checkoutId);
 
     if (result.status === "PAID" && result.confirmed) {
-      return { paid: true, status: result.status };
+      // Issued on first use and cached from then on. Returns null on any
+      // failure, so a wallet outage costs the buttons, never the confirmation.
+      const pass = result.memberId
+        ? await getOrCreateMemberPass(result.memberId)
+        : null;
+
+      return { paid: true, status: result.status, pass: pass ?? undefined };
     }
 
     if (result.status === "PAID") {

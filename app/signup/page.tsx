@@ -85,13 +85,10 @@ export default function SignUp() {
           className="h-24 w-24 rounded-lg"
         />
         <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black">
-          ELSA Maastricht 2026/2027
-        </h1>
-        <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black">
-          Membership Sign Up/Renewal Form
+          Become an ELSA Member
         </h1>
         <p className="mx-auto mt-2 w-full text-lg leading-8 text-zinc-600">
-          To Become a New Member or Renew Your Membership, please fill in and
+          Welcome to the Membership Sign Up/Renewal Form for the academic year 2026/27. To Become a New Member or Renew Your Membership, please fill in and
           submit this form.
         </p>
         <p className="mx-auto w-full text-base leading-7 text-zinc-600">
