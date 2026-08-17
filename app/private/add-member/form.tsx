@@ -39,16 +39,6 @@ export function ConfirmForm({
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-8">
-      {state.status === "success" && (
-        <p
-          role="status"
-          className="rounded-lg border border-solid border-black/[.08] bg-zinc-50 p-4 text-base leading-7 text-zinc-950"
-        >
-          {state.confirmedName} has been confirmed and added to the confirmed
-          members list.
-        </p>
-      )}
-
       <div className="flex flex-col gap-2">
         <label htmlFor="pendingMemberId" className={labelClass}>
           New Member name

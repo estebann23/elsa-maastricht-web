@@ -22,9 +22,21 @@ async function loadPendingMembers(): Promise<{
   }
 
   const supabase = createServiceRoleClient();
+  // Only sign-ups that chose to pay in person. Someone who picked online
+  // payment is settled by SumUp, and confirming them here would record a
+  // payment nobody took at the desk. Checkout rewrites this column to 'online'
+  // when a member switches to paying online, so they drop off the list by
+  // themselves. The stored value is 'in_person'; "In-person" is only how the
+  // form spells it.
+  // Already-paid sign-ups drop off the list. Confirming one is rejected anyway
+  // — confirmed_members is unique per sign-up — but leaving them in the picker
+  // invites a team member to pick a name and be told off for it, which at a
+  // busy desk reads as the tool being broken rather than the job being done.
   const { data, error } = await supabase
     .from("pending_members")
     .select("id, first_name, last_name")
+    .eq("payment_method", "in_person")
+    .neq("status", "paid")
     .order("first_name", { ascending: true });
 
   if (error) {

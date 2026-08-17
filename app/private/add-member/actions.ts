@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { createServiceRoleClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { isAuthoriser } from "./constants";
@@ -122,11 +123,18 @@ export async function confirmMember(
     };
   }
 
+  // The member has just left the pending list, so the picker behind us is now
+  // stale. Revalidate before navigating, not after: this page is force-dynamic,
+  // and a team member confirming several people in a row must not be offered
+  // someone they already confirmed.
   revalidatePath("/private/add-member");
 
-  return {
-    status: "success",
-    errors: {},
-    confirmedName: `${pending.first_name} ${pending.last_name}`,
-  };
+  // Must be called outside try/catch: redirect() signals by throwing, and a
+  // catch block would swallow it.
+  //
+  // The confirmation page is passed the sign-up id rather than the name, and
+  // looks the name up in confirmed_members itself. A name in the URL would let
+  // any address render "someone has been confirmed" for a confirmation that
+  // never happened; an id can only produce a message if the record exists.
+  redirect(`/private/add-member/confirmed?member=${pending.id}`);
 }
